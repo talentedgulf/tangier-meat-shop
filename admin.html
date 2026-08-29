@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Tangier Meat Shop</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .login-box, .admin-box { max-width: 750px; margin: 30px auto; padding: 25px; background: #fff; border-radius: 8px; border: 1px solid #ddd; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        .product-edit-card { padding: 15px; border: 1px solid #eee; border-radius: 6px; margin-bottom: 15px; background: #fafafa; position: relative; }
+        .product-edit-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .btn-danger { background-color: #d9534f; color: #fff; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 4px; cursor: pointer; }
+        .badge-tag { background: var(--secondary); color: #fff; padding: 2px 6px; font-size: 0.75rem; border-radius: 3px; }
+    </style>
+</head>
+<body style="background: #f4f1ea;">
+
+    <!-- Password Lock -->
+    <div id="loginSection" class="login-box">
+        <h2 style="color: var(--primary); margin-bottom: 15px;">Tangier Meat Shop Admin</h2>
+        <div class="form-group">
+            <label>Enter Admin Password:</label>
+            <input type="password" id="adminPassword" placeholder="Default: tangier123">
+        </div>
+        <button onclick="checkPassword()" class="btn btn-primary">Log In</button>
+        <p id="errorMsg" style="color: red; margin-top: 10px; display: none;">Incorrect Password</p>
+    </div>
+
+    <!-- Main Admin Dashboard -->
+    <div id="adminPanel" class="admin-box" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="color: var(--primary);">Catalog & Price Manager</h2>
+            <button onclick="logout()" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;">Logout</button>
+        </div>
+
+        <!-- 1. Daily Banner Section -->
+        <div style="background: var(--light); padding: 15px; border-radius: 6px; margin-bottom: 25px; border: 1px solid #e0d9cc;">
+            <h3 style="margin-bottom: 10px;">📢 Daily Banner Announcement</h3>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label>Promotion Text (Leave blank to hide banner):</label>
+                <input type="text" id="promoText" placeholder="e.g., 🔥 Weekend Offer: Fresh Lamb Chops 10% Off!">
+            </div>
+        </div>
+
+        <!-- 2. Add New Product Section -->
+        <div style="background: #fff; border: 2px dashed var(--secondary); padding: 15px; border-radius: 6px; margin-bottom: 25px;">
+            <h3 style="color: var(--primary); margin-bottom: 10px;">➕ Add New Meat Product</h3>
+            <div style="display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="newName" placeholder="Item Name (e.g. Ribeye Steak)">
+                <select id="newCategory">
+                    <option value="Beef">Beef & Veal</option>
+                    <option value="Lamb">Lamb & Mutton</option>
+                    <option value="Poultry">Poultry</option>
+                    <option value="Specialties">Moroccan Specialties</option>
+                </select>
+                <input type="text" id="newPrice" placeholder="Price (AED)">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="newImage" placeholder="Image Icon URL (optional, e.g. https://domain.com/ribeye.jpg)">
+            </div>
+            <button onclick="addNewProduct()" class="btn btn-primary" style="padding: 8px 15px;">Add Item to Catalog</button>
+        </div>
+
+        <!-- 3. Existing Products Catalog Edit -->
+        <h3 style="margin-bottom: 15px;">🥩 Manage Active Products</h3>
+        <div id="productList">
+            <!-- Dynamically populated products -->
+        </div>
+
+        <button onclick="saveChanges()" class="btn btn-primary" style="margin-top: 20px; width: 100%; padding: 12px; font-size: 1.1rem;">Save All Catalog Updates</button>
+        <p id="saveStatus" style="color: green; margin-top: 10px; font-weight: bold; text-align: center; display: none;">✅ All changes saved and published to live website!</p>
+    </div>
+
+    <script>
+        // Default initial items if storage is empty
+        const defaultProducts = [
+            { id: "1", name: "Tenderloin Filet", category: "Beef", price: "85", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
+            { id: "2", name: "Ribeye & Striploin Cuts", category: "Beef", price: "75", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
+            { id: "3", name: "Fresh Lamb Chops", category: "Lamb", price: "65", image: "https://cdn-icons-png.flaticon.com/512/1134/1134449.png" },
+            { id: "4", name: "Fresh Whole Chicken", category: "Poultry", price: "25", image: "https://cdn-icons-png.flaticon.com/512/1046/1046751.png" },
+            { id: "5", name: "Moroccan Spiced Merguez", category: "Specialties", price: "50", image: "https://cdn-icons-png.flaticon.com/512/3082/3082060.png" }
+        ];
+
+        let currentProducts = [];
+
+        function checkPassword() {
+            const pwd = document.getElementById('adminPassword').value;
+            if (pwd === "tangier123") {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadAdminData();
+            } else {
+                document.getElementById('errorMsg').style.display = 'block';
+            }
+        }
+
+        function loadAdminData() {
+            document.getElementById('promoText').value = localStorage.getItem('tangier_promo') || '';
+            currentProducts = JSON.parse(localStorage.getItem('tangier_products')) || defaultProducts;
+            renderAdminProducts();
+        }
+
+        function renderAdminProducts() {
+            const container = document.getElementById('productList');
+            container.innerHTML = '';
+
+            currentProducts.forEach((p, index) => {
+                container.innerHTML += `
+                    <div class="product-edit-card">
+                        <div class="product-edit-grid">
+                            <div>
+                                <label>Product Title</label>
+                                <input type="text" value="${p.name}" onchange="updateProduct(${index}, 'name', this.value)">
+                            </div>
+                            <div>
+                                <label>Category</label>
+                                <select onchange="updateProduct(${index}, 'category', this.value)">
+                                    <option value="Beef" ${p.category === 'Beef' ? 'selected' : ''}>Beef & Veal</option>
+                                    <option value="Lamb" ${p.category === 'Lamb' ? 'selected' : ''}>Lamb & Mutton</option>
+                                    <option value="Poultry" ${p.category === 'Poultry' ? 'selected' : ''}>Poultry</option>
+                                    <option value="Specialties" ${p.category === 'Specialties' ? 'selected' : ''}>Specialties</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Price (AED/kg)</label>
+                                <input type="text" value="${p.price}" onchange="updateProduct(${index}, 'price', this.value)">
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div style="flex-grow: 1;">
+                                <label>Image / Icon URL</label>
+                                <input type="text" value="${p.image || ''}" placeholder="Image URL (http://...)" onchange="updateProduct(${index}, 'image', this.value)">
+                            </div>
+                            <button onclick="deleteProduct(${index})" class="btn-danger" style="margin-top: 18px;">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function updateProduct(index, field, value) {
+            currentProducts[index][field] = value;
+        }
+
+        function addNewProduct() {
+            const name = document.getElementById('newName').value;
+            const category = document.getElementById('newCategory').value;
+            const price = document.getElementById('newPrice').value;
+            const image = document.getElementById('newImage').value;
+
+            if (!name || !price) {
+                alert("Please fill in both item name and price.");
+                return;
+            }
+
+            const newObj = {
+                id: Date.now().toString(),
+                name: name,
+                category: category,
+                price: price,
+                image: image || "https://cdn-icons-png.flaticon.com/512/3143/3143643.png"
+            };
+
+            currentProducts.unshift(newObj);
+            renderAdminProducts();
+
+            // Clear inputs
+            document.getElementById('newName').value = '';
+            document.getElementById('newPrice').value = '';
+            document.getElementById('newImage').value = '';
+        }
+
+        function deleteProduct(index) {
+            if (confirm("Are you sure you want to delete this product?")) {
+                currentProducts.splice(index, 1);
+                renderAdminProducts();
+            }
+        }
+
+        function saveChanges() {
+            const promo = document.getElementById('promoText').value;
+            localStorage.setItem('tangier_promo', promo);
+            localStorage.setItem('tangier_products', JSON.stringify(currentProducts));
+
+            const status = document.getElementById('saveStatus');
+            status.style.display = 'block';
+            setTimeout(() => { status.style.display = 'none'; }, 3000);
+        }
+
+        function logout() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

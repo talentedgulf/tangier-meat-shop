@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meat Catalog | Tangier Meat Shop</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        .menu-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px dashed #e0e0e0; }
+        .menu-item-left { display: flex; align-items: center; gap: 12px; }
+        .menu-icon { width: 36px; height: 36px; object-fit: cover; border-radius: 4px; }
+        .price-tag { color: var(--primary); font-weight: 700; font-size: 1.05rem; }
+    </style>
+</head>
+<body>
+
+    <header class="navbar">
+    <div class="container nav-container">
+        <a href="index.html" class="logo">Tangier Meat Shop</a>
+        <nav class="nav-links">
+            <a href="index.html" class="active">Home</a>
+            <a href="menu.html">Meat Menu</a>
+            <a href="about.html">About Us</a>
+            <a href="contact.html">Contact</a>
+        </nav>
+        <a href="https://wa.me/97165791303" target="_blank" class="btn btn-primary btn-header">Order WhatsApp</a>
+    </div>
+</header>
+
+    <!-- Daily Banner -->
+    <div id="promoBanner" style="display: none; background: var(--secondary); color: #fff; text-align: center; padding: 12px; font-weight: 600;"></div>
+
+    <div class="page-header">
+        <h1>Our Fresh Meat Catalog</h1>
+        <p>Daily prices & custom butchery selections</p>
+    </div>
+
+    <section style="padding: 60px 0;">
+        <div class="container grid-2">
+            
+            <div class="card">
+                <h2 style="color: var(--primary); margin-bottom: 15px;">🥩 Beef & Veal</h2>
+                <div id="cat_Beef"></div>
+            </div>
+
+            <div class="card">
+                <h2 style="color: var(--primary); margin-bottom: 15px;">🐑 Lamb & Mutton</h2>
+                <div id="cat_Lamb"></div>
+            </div>
+
+            <div class="card">
+                <h2 style="color: var(--primary); margin-bottom: 15px;">🍗 Poultry</h2>
+                <div id="cat_Poultry"></div>
+            </div>
+
+            <div class="card card-highlight">
+                <h2 style="color: var(--primary); margin-bottom: 15px;">Pakistani Specialties</h2>
+                <div id="cat_Specialties"></div>
+            </div>
+
+        </div>
+    </section>
+
+    <a href="https://wa.me/97165791303" class="whatsapp-float" target="_blank">💬</a>
+
+    <script>
+        const defaultProducts = [
+            { id: "1", name: "Tenderloin Filet", category: "Beef", price: "85", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
+            { id: "2", name: "Ribeye & Striploin Cuts", category: "Beef", price: "75", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
+            { id: "3", name: "Fresh Lamb Chops", category: "Lamb", price: "65", image: "https://cdn-icons-png.flaticon.com/512/1134/1134449.png" },
+            { id: "4", name: "Fresh Whole Chicken", category: "Poultry", price: "25", image: "https://cdn-icons-png.flaticon.com/512/1046/1046751.png" },
+            { id: "5", name: "Moroccan Spiced Merguez", category: "Specialties", price: "50", image: "https://cdn-icons-png.flaticon.com/512/3082/3082060.png" }
+        ];
+
+        // 1. Render Banner
+        // Render Eye-Catching Banner
+const promoText = localStorage.getItem('tangier_promo');
+if (promoText && promoText.trim() !== "") {
+    const banner = document.getElementById('promoBanner');
+    banner.innerHTML = `<span class="promo-badge">🔥 SPECIAL OFFER</span> ${promoText}`;
+    banner.style.display = 'block';
+}
+
+        // 2. Load and Render Products
+        const products = JSON.parse(localStorage.getItem('tangier_products')) || defaultProducts;
+
+        products.forEach(item => {
+    const catContainer = document.getElementById(`cat_${item.category}`);
+    if (catContainer) {
+        const imgHtml = item.image ? `<img src="${item.image}" class="menu-icon" alt="${item.name}">` : '';
+        
+        // Add Free Delivery Badge (renders for all or based on item property)
+        const freeDeliveryBadge = `<span class="badge-free-delivery">🚚 Free Delivery</span>`;
+
+        catContainer.innerHTML += `
+            <div class="menu-item">
+                <div class="menu-item-left">
+                    ${imgHtml}
+                    <div>
+                        <span style="font-weight: 500;">${item.name}</span>
+                        ${freeDeliveryBadge}
+                    </div>
+                </div>
+                <span class="price-tag">${item.price} AED/kg</span>
+            </div>
+        `;
+    }
+});
+    </script>
+</body>
+</html>
