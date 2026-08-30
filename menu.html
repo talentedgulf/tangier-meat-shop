@@ -41,22 +41,34 @@
             
             <div class="card">
                 <h2 style="color: var(--primary); margin-bottom: 15px;">🥩 Beef & Veal</h2>
-                <div id="cat_Beef"><div class="spinner-container"><div class="spinner"></div><small>Updating today's prices...</small></div></div>
+                <div id="cat_Beef"><div class="spinner-container">
+            <div class="spinner"></div>
+            <small style="font-weight: 500;">Updating today's fresh prices...</small>
+        </div></div>
             </div>
 
             <div class="card">
                 <h2 style="color: var(--primary); margin-bottom: 15px;">🐑 Lamb & Mutton</h2>
-                <div id="cat_Lamb"><div class="spinner-container"><div class="spinner"></div><small>Updating today's prices...</small></div></div>
+                <div id="cat_Lamb"><div class="spinner-container">
+            <div class="spinner"></div>
+            <small style="font-weight: 500;">Updating today's fresh prices...</small>
+        </div></div>
             </div>
 
             <div class="card">
                 <h2 style="color: var(--primary); margin-bottom: 15px;">🍗 Poultry</h2>
-                <div id="cat_Poultry"><div class="spinner-container"><div class="spinner"></div><small>Updating today's prices...</small></div></div>
+                <div id="cat_Poultry"><div class="spinner-container">
+            <div class="spinner"></div>
+            <small style="font-weight: 500;">Updating today's fresh prices...</small>
+        </div></div>
             </div>
 
             <div class="card card-highlight">
                 <h2 style="color: var(--primary); margin-bottom: 15px;">Pakistani Specialties</h2>
-                <div id="cat_Specialties"><div class="spinner-container"><div class="spinner"></div><small>Updating today's prices...</small></div></div>
+                <div id="cat_Specialties"><div class="spinner-container">
+            <div class="spinner"></div>
+            <small style="font-weight: 500;">Updating today's fresh prices...</small>
+        </div></div>
             </div>
 
         </div>
@@ -68,41 +80,79 @@
     // Paste your Google Apps Script Web App URL here
     const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwUo2rBOkiGpl8vy_Wpw9yia2QPa52Jwu9z0mdTmboO8jEgF4TJDVYKpa-nWs7ipFFh/exec";
 
-    fetch(SHEET_API_URL)
-        .then(response => response.json())
-        .then(data => {
-            // 1. Render Promo Banner
+    // 1. PLACE THE RENDER FUNCTION HERE
+    function renderProducts(products) {
+        // This clears out the animated spinner divs
+        ["cat_Beef", "cat_Lamb", "cat_Poultry", "cat_Specialties"].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = "";
+        });
+
+        // This inserts the live products into each category card
+        products.forEach(item => {
+            const catContainer = document.getElementById(`cat_${item.category}`);
+            if (catContainer) {
+                const imgHtml = item.image ? `<img src="${item.image}" class="menu-icon" alt="${item.name}">` : '';
+                const unitLabel = (item.unit || "kg").toString().toLowerCase() === "pc" ? "AED/pc" : "AED/kg";
+
+                catContainer.innerHTML += `
+                    <div class="menu-item">
+                        <div class="menu-item-left">
+                            ${imgHtml}
+                            <div>
+                                <span style="font-weight: 500;">${item.name}</span>
+                                <span class="badge-free-delivery">🚚 Free Delivery</span>
+                            </div>
+                        </div>
+                        <span class="price-tag">${item.price} ${unitLabel}</span>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    // 2. MAIN FETCH FUNCTION THAT CALLS RENDERPRODUCTS
+    async function loadMenuData() {
+        // Check cache first for instant load
+        const cachedData = localStorage.getItem('tangier_cached_menu');
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData);
+                renderProducts(parsed.products);
+                if (parsed.promo) {
+                    const banner = document.getElementById('promoBanner');
+                    banner.innerHTML = `<span class="promo-badge">🔥 SPECIAL OFFER</span> ${parsed.promo}`;
+                    banner.style.display = 'block';
+                }
+            } catch (e) {
+                console.error("Cache parsing error", e);
+            }
+        }
+
+        // Fetch live prices from Google Apps Script
+        try {
+            const response = await fetch(SHEET_API_URL, { redirect: 'follow' });
+            const rawText = await response.text();
+            const data = JSON.parse(rawText);
+
+            // Save to local cache
+            localStorage.setItem('tangier_cached_menu', JSON.stringify(data));
+
+            // Clear spinner and render fresh items
+            renderProducts(data.products);
+
             if (data.promo && data.promo.toString().trim() !== "") {
                 const banner = document.getElementById('promoBanner');
                 banner.innerHTML = `<span class="promo-badge">🔥 SPECIAL OFFER</span> ${data.promo}`;
                 banner.style.display = 'block';
             }
+        } catch (error) {
+            console.error("Live fetch failed", error);
+        }
+    }
 
-            // 2. Render Products Dynamically
-            data.products.forEach(item => {
-                const catContainer = document.getElementById(`cat_${item.category}`);
-                if (catContainer) {
-                    const imgHtml = item.image ? `<img src="${item.image}" class="menu-icon" alt="${item.name}">` : '';
-                    
-                    // Format Unit Label (e.g., "32 AED/kg" or "16 AED/pc")
-                    const unitLabel = item.unit.toString().toLowerCase() === "pc" ? "AED/pc" : "AED/kg";
-
-                    catContainer.innerHTML += `
-                        <div class="menu-item">
-                            <div class="menu-item-left">
-                                ${imgHtml}
-                                <div>
-                                    <span style="font-weight: 500;">${item.name}</span>
-                                    <span class="badge-free-delivery">🚚 Free Delivery</span>
-                                </div>
-                            </div>
-                            <span class="price-tag">${item.price} ${unitLabel}</span>
-                        </div>
-                    `;
-                }
-            });
-        })
-        .catch(error => console.error("Error loading live menu:", error));
+    // 3. EXECUTE ON PAGE LOAD
+    loadMenuData();
 </script>
 </body>
 </html>
