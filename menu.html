@@ -65,48 +65,44 @@
     <a href="https://wa.me/97165791303" class="whatsapp-float" target="_blank">💬</a>
 
     <script>
-        const defaultProducts = [
-            { id: "1", name: "Tenderloin Filet", category: "Beef", price: "85", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
-            { id: "2", name: "Ribeye & Striploin Cuts", category: "Beef", price: "75", image: "https://cdn-icons-png.flaticon.com/512/3143/3143643.png" },
-            { id: "3", name: "Fresh Lamb Chops", category: "Lamb", price: "65", image: "https://cdn-icons-png.flaticon.com/512/1134/1134449.png" },
-            { id: "4", name: "Fresh Whole Chicken", category: "Poultry", price: "25", image: "https://cdn-icons-png.flaticon.com/512/1046/1046751.png" },
-            { id: "5", name: "Moroccan Spiced Merguez", category: "Specialties", price: "50", image: "https://cdn-icons-png.flaticon.com/512/3082/3082060.png" }
-        ];
+    // Paste your Google Apps Script Web App URL here
+    const SHEET_API_URL = "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
 
-        // 1. Render Banner
-        // Render Eye-Catching Banner
-const promoText = localStorage.getItem('tangier_promo');
-if (promoText && promoText.trim() !== "") {
-    const banner = document.getElementById('promoBanner');
-    banner.innerHTML = `<span class="promo-badge">🔥 SPECIAL OFFER</span> ${promoText}`;
-    banner.style.display = 'block';
-}
+    fetch(SHEET_API_URL)
+        .then(response => response.json())
+        .then(data => {
+            // 1. Render Promo Banner
+            if (data.promo && data.promo.toString().trim() !== "") {
+                const banner = document.getElementById('promoBanner');
+                banner.innerHTML = `<span class="promo-badge">🔥 SPECIAL OFFER</span> ${data.promo}`;
+                banner.style.display = 'block';
+            }
 
-        // 2. Load and Render Products
-        const products = JSON.parse(localStorage.getItem('tangier_products')) || defaultProducts;
+            // 2. Render Products Dynamically
+            data.products.forEach(item => {
+                const catContainer = document.getElementById(`cat_${item.category}`);
+                if (catContainer) {
+                    const imgHtml = item.image ? `<img src="${item.image}" class="menu-icon" alt="${item.name}">` : '';
+                    
+                    // Format Unit Label (e.g., "32 AED/kg" or "16 AED/pc")
+                    const unitLabel = item.unit.toString().toLowerCase() === "pc" ? "AED/pc" : "AED/kg";
 
-        products.forEach(item => {
-    const catContainer = document.getElementById(`cat_${item.category}`);
-    if (catContainer) {
-        const imgHtml = item.image ? `<img src="${item.image}" class="menu-icon" alt="${item.name}">` : '';
-        
-        // Add Free Delivery Badge (renders for all or based on item property)
-        const freeDeliveryBadge = `<span class="badge-free-delivery">🚚 Free Delivery</span>`;
-
-        catContainer.innerHTML += `
-            <div class="menu-item">
-                <div class="menu-item-left">
-                    ${imgHtml}
-                    <div>
-                        <span style="font-weight: 500;">${item.name}</span>
-                        ${freeDeliveryBadge}
-                    </div>
-                </div>
-                <span class="price-tag">${item.price} AED/kg</span>
-            </div>
-        `;
-    }
-});
-    </script>
+                    catContainer.innerHTML += `
+                        <div class="menu-item">
+                            <div class="menu-item-left">
+                                ${imgHtml}
+                                <div>
+                                    <span style="font-weight: 500;">${item.name}</span>
+                                    <span class="badge-free-delivery">🚚 Free Delivery</span>
+                                </div>
+                            </div>
+                            <span class="price-tag">${item.price} ${unitLabel}</span>
+                        </div>
+                    `;
+                }
+            });
+        })
+        .catch(error => console.error("Error loading live menu:", error));
+</script>
 </body>
 </html>
